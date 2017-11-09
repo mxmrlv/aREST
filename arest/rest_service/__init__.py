@@ -1,27 +1,17 @@
 
 from flask import Flask
 
-from .. constants import METHODS
 from . import (
-    service_template,
-    service,
+    execution,
     plugin,
-    execution
+    service,
+    service_template,
+    task,
+    log
 )
 
 app = Flask(__name__)
 
-
-app.route('/service_template',
-          methods=[METHODS.PUT, METHODS.GET, METHODS.DELETE]
-          )(service_template.handler)
-
-app.route('/service',
-          methods=[METHODS.POST, METHODS.GET, METHODS.DELETE]
-          )(service.handler)
-
-app.route('/execution',
-          methods=[METHODS.POST, METHODS.GET]
-          )(execution.handler)
-
-
+for entity in (execution, plugin, service, service_template, task, log):
+    endpoint = '/{0}'.format(entity.handler.__endpoint__)
+    app.route(endpoint, methods=entity.handler.methods)(entity.handler)

@@ -10,19 +10,13 @@ from aria.orchestrator import (
 )
 from aria.storage import sql_mapi
 from aria.storage import filesystem_rapi
-from flask import Flask, request
-
-from arest.constants import METHODS
-
-app = Flask(__name__)
 
 
 class AriaCore():
 
     def __init__(self, root_dir=None):
-        import pydevd; pydevd.settrace('localhost', suspend=False)
-        self._root_dir = root_dir or os.path.join(os.path.expanduser(
-            '~'), '.arrest')
+        self._root_dir = root_dir or \
+                         os.path.join(os.path.expanduser('~'), '.arest')
 
         models_dir = os.path.join(self._root_dir, 'models')
         resource_dir = os.path.join(self._root_dir, 'resources')
@@ -70,6 +64,7 @@ class AriaCore():
 
     def create_service(self, *args, **kwargs):
         aria_.install_aria_extensions()
+        kwargs.setdefault('inputs', {})
         self._core.create_service(*args, **kwargs)
 
     def execute_workflow(self, **kwargs):

@@ -5,24 +5,28 @@ from . import handler_base
 from ..constants import METHODS
 
 
-class Service(handler_base.HandlerBase):
+class Service(handler_base.AbstractHandler):
 
-    mapper = {
+    __endpoint__ = 'service'
+    __mapper__ = {
         METHODS.POST: 'create',
         METHODS.GET: 'get',
         METHODS.DELETE: 'delete'
     }
 
-    def create(self, request):
-        return self._to_string(aria.create_service(**dict(request.form.items())))
+    @staticmethod
+    def create(request):
+        return aria.create_service(**dict(request.form.items()))
 
-    def get(self, request):
+    @staticmethod
+    def get(request):
         service_id = request.args.get('id')
-        return self._to_string(aria.model.service.get(service_id))
+        return aria.model.service.get(service_id)
 
-    def delete(self, request):
+    @staticmethod
+    def delete(request):
         service_id = request.args.get('id')
-        return self._to_string(aria.model.service.delete(service_id))
+        return aria.model.service.delete(service_id)
 
 
 handler = Service()
