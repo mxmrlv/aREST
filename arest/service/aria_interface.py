@@ -4,11 +4,11 @@ import errno
 
 import aria as aria_
 from aria import core as aria_core
-from aria.orchestrator import (
-    plugin,
-    workflow_runner
-)
-from aria.storage import sql_mapi
+from aria.orchestrator import plugin, execution_preparer
+from aria.orchestrator.context.workflow import WorkflowContext
+from aria.orchestrator.workflows.core import engine
+from aria.orchestrator.workflows.executor.process import ProcessExecutor
+from aria.storage import sql_mapi, ModelStorage
 from aria.storage import filesystem_rapi
 
 
@@ -16,7 +16,7 @@ class AriaCore():
 
     def __init__(self, root_dir=None):
         self._root_dir = root_dir or \
-                         os.path.join(os.path.expanduser('~'), '.arest')
+                         os.path.join(os.path.expanduser('~'), '.aria')
 
         models_dir = os.path.join(self._root_dir, 'models')
         resource_dir = os.path.join(self._root_dir, 'resources')
@@ -67,15 +67,45 @@ class AriaCore():
         kwargs.setdefault('inputs', {})
         self._core.create_service(*args, **kwargs)
 
-    def execute_workflow(self, **kwargs):
-        wf_runner = workflow_runner.WorkflowRunner(
+    def execute_workflow(self, service_id, workflow_name, **kwargs):
+        ctx = self._create_execution(service_id, workflow_name, **kwargs)
+
+        # Create a mapi based executor
+        ctx = WorkflowContext(
+            name=ctx.workflow_name,
+            model_storage=self._get_rest_mapi(),
+            resource_storage=ctx.resource,
+            service_id=service_id,
+            execution_id=ctx.execution.id,
+            workflow_name=ctx.workflow_name,
+            task_max_attempts=ctx._task_max_attempts,
+            task_retry_interval=ctx._task_retry_interval,
+        )
+
+        engine.Engine(ProcessExecutor()).execute(ctx)
+
+    @staticmethod
+    def _get_rest_mapi():
+        from aria.rest_mapi.core import RESTClient
+        from aria.modeling import models
+
+        return ModelStorage(
+            api_cls=RESTClient,
+            items=models.models_to_register,
+            initiator=False
+
+        )
+
+    def _create_execution(self, service_id, workflow_name, **kwargs):
+        exec_inputs = kwargs.pop('inputs', None)
+        return execution_preparer.ExecutionPreparer(
             self.model,
             self.resource,
             self._plugin_manager,
+            self.model.service.get(service_id),
+            workflow_name,
             **kwargs
-        )
-
-        wf_runner.execute()
+        ).prepare(execution_inputs=exec_inputs)
 
     def delete_service(self, *args, **kwargs):
         self._core.delete_service(*args, **kwargs)
@@ -99,3 +129,6 @@ class AriaCore():
 
 
 interface = AriaCore()
+
+if __name__ == '__main__':
+    interface.execute_workflow(1, 'install')
