@@ -1,12 +1,12 @@
 
 
-class ArrestException(Exception):
+class ArestException(Exception):
     pass
 
 
-class UnsupportedMethodException(ArrestException):
+class UnsupportedMethodException(ArestException):
     pass
 
 
-class TooManyValueException(ArrestException):
+class TooManyValueException(ArestException):
     pass
