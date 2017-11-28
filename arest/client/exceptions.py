@@ -1,0 +1,2 @@
+class UnsupportedAPIExcepiton(Exception):
+    pass

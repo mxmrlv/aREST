@@ -98,4 +98,4 @@ class AriaCore():
         return existing_paths
 
 
-aria = AriaCore()
+interface = AriaCore()
